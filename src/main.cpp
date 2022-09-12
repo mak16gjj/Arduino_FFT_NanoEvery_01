@@ -7,6 +7,7 @@
 #include <msgeq7_helper.h>
 #include <equalizer_helper.h>
 #include <nrf24_helper.h>
+#include <customfft_helper.h>
 
 #define Pin_Button 4
 uint8_t last_Button_State = 0;
@@ -72,6 +73,7 @@ void loop() {
     if(mode == 2)
     {
       approxfft::doApproxFFT();
+      //customfft::doCustomFFT();
       Mode1_changeSubmode(); 
       //submode = 2;  //nur zum Testen des spezifischen Submodes
       sendArray();

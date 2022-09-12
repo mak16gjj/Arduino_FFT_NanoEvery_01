@@ -13,6 +13,8 @@ namespace customfft
     int omega_power_imaginary(int exponent_nominator);
     int abs_complex(int real, int imaginary);
 
+    void custom_fft(int16_t in[], int16_t out[]);
+
     #define FFT_BUTTERFLY_DATA_TYPE int32_t
     #define FFT_GENERAL_DATA_TYPE int16_t
 
@@ -70,11 +72,21 @@ namespace customfft
     const uint16_t AMPLITUDE = 1;      // Depending on your audio source level, you may need to alter this value. Can be used as a 'sensitivity' control.
     const uint16_t NUM_BANDS = 8;         // To change this, you will need to change the bunch of if statements describing the mapping from bins to bands
     const uint16_t TOP = 7;
-    const uint16_t NOISE = 200; // Used as a crude noise filter, values below this are ignored
+    const uint16_t NOISE = 50; // Used as a crude noise filter, values below this are ignored
 
-    
+    uint16_t out[NUMBER_OF_SAMPLES]={};
+    uint16_t data[NUMBER_OF_SAMPLES]={};
 
+    void doCustomFFT()
+    {
+        for(uint16_t sample_nr = 0; sample_nr < NUMBER_OF_SAMPLES;sample_nr++)
+        {
+            data[sample_nr] = analogRead(AUDIO_IN_PIN);
+        }
 
+        custom_fft(data,out);
+        // Serial.println(f);
+    }
    
 
     //-----------------------------FFT Function----------------------------------------------//
