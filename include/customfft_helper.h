@@ -13,6 +13,8 @@ namespace customfft
     int omega_power_imaginary(int exponent_nominator);
     int abs_complex(int real, int imaginary);
 
+
+    const int16_t MAX_MAGNITUDE = 1024;
     const byte OMEGA_SHIFT_AMOUNT = 10;
     const byte LB_NUMBER_OF_SAMPLES = 6;
     const uint16_t NUMBER_OF_SAMPLES = 1 << LB_NUMBER_OF_SAMPLES;
@@ -32,10 +34,23 @@ namespace customfft
 
     const int16_t omega_data[NUMBER_OF_SAMPLES / 4 + 1] = // 1024 * sin values in pi / 32 steps  tp pi/2
         {
-            0, 100, 200, 297,
-            392, 483, 569, 650,
-            724, 792, 851, 903,
-            946, 980, 1004, 1019, 1 << OMEGA_SHIFT_AMOUNT
+            0 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            100 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            200 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            297 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            392 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            483 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            569 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            650 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            724 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            792 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            851 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            903 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            946 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            980 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            1004 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            1019 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            1024 >> (10 - OMEGA_SHIFT_AMOUNT)
         };
     
     const byte RSSdata[20] = {7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2};
@@ -106,18 +121,18 @@ namespace customfft
 
         
 
-        if (data_magnitude > 1024)
+        if (data_magnitude > MAX_MAGNITUDE)
         {
-            while (temp_data_magnitude > 1024)
+            while (temp_data_magnitude > MAX_MAGNITUDE)
             {
                 temp_data_magnitude = temp_data_magnitude >> 1;
                 scale ++;
             }
         }
 
-        if (data_magnitude < 1024)
+        if (data_magnitude < MAX_MAGNITUDE)
         {
-            while (temp_data_magnitude < 1024)
+            while (temp_data_magnitude < MAX_MAGNITUDE)
             {
                 temp_data_magnitude = temp_data_magnitude << 1;
                 scale --;
