@@ -14,7 +14,7 @@ namespace approxfft
     int fastRSS(int a, int b);
 
     //---------------------------------lookup data------------------------------------//
-    byte isin_data[128] =
+    byte isin_data[128] = // sin
         {0, 1, 3, 4, 5, 6, 8, 9, 10, 11, 13, 14, 15, 17, 18, 19, 20,
          22, 23, 24, 26, 27, 28, 29, 31, 32, 33, 35, 36, 37, 39, 40, 41, 42,
          44, 45, 46, 48, 49, 50, 52, 53, 54, 56, 57, 59, 60, 61, 63, 64, 65,
@@ -23,7 +23,7 @@ namespace approxfft
          118, 120, 122, 124, 125, 127, 129, 131, 133, 134, 136, 138, 140, 142, 144, 146, 148,
          150, 152, 155, 157, 159, 161, 164, 166, 169, 171, 174, 176, 179, 182, 185, 188, 191,
          195, 198, 202, 206, 210, 215, 221, 227, 236};
-    unsigned int Pow2[14] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+    unsigned int Pow2[14] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096}; // this is unnecessary, just use 1 << index
     byte RSSdata[20] = {7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2};
     //---------------------------------------------------------------------------------//
 
@@ -88,19 +88,21 @@ namespace approxfft
 
         for (int i = 0; i < 12; i++) // calculating the levels
         {
-            if (Pow2[i] <= N)
+            if (Pow2[i] <= N) // Get lb(N)
             {
                 o = i;
             }
         }
         a = Pow2[o];
-        int out_r[a];  // real part of transform
+
+        //These arrays can be created once, size is fixed
+        int out_r[a];  // real part of transform 
         int out_im[a]; // imaginory part of transform
 
         for (int i = 0; i < a; i++) // getting min max and average for scalling
         {
             out_r[i] = 0;
-            out_r[i] = 0;
+            out_r[i] = 0; // should this be out_im[i]?
             data_avg = data_avg + in[i];
             if (in[i] > data_max)
             {
@@ -112,11 +114,12 @@ namespace approxfft
             }
         }
 
-        data_avg = data_avg >> o;
+        data_avg = data_avg >> o; // == data_avg / 2^o
         scale = 0;
         data_mag = data_max - data_min;
-        temp11 = data_mag;
+        temp11 = data_mag; // great var name
 
+        //this loop is suspicious
         for (int i; i < 128; i++) // scalling data  from +512 to -512
 
             if (data_mag > 1024)
@@ -137,6 +140,8 @@ namespace approxfft
             }
         }
 
+        //for loop should probably be here
+        //lots of jumps in the loop, branch prediction is not happy :(
         if (data_mag > 1024)
         {
             for (int i = 0; i < a; i++)
@@ -149,6 +154,7 @@ namespace approxfft
 
         if (data_mag < 1024)
         {
+            //this should not be here, it should be in 141
             scale = scale - 1;
             for (int i = 0; i < a; i++)
             {
@@ -156,35 +162,40 @@ namespace approxfft
                 in[i] = in[i] << scale;
             }
 
+            // scale = -scale + 1
             scale = 128 + scale;
         }
 
         x = 0;
-        for (int b = 0; b < o; b++) // bit reversal order stored in im_out array
+
+        // can be created statically or be a lookup table
+        for (int b = 0; b < o; b++) // create bit reverse addressing and store it in im_out array
         {
-            c1 = Pow2[b];
-            f = Pow2[o] / (c1 + c1);
-            for (int j = 0; j < c1; j++)
+            c1 = Pow2[b]; // 2^^run
+            f = Pow2[o] / (c1 + c1); // num_samples / 2^^run+1, just use Pow[o-b-1]?
+            for (int j = 0; j < c1; j++) // 1, 2, 4, 8, 16, 32, 64
             {
                 x = x + 1;
                 out_im[x] = out_im[j] + f;
             }
         }
 
-        for (int i = 0; i < a; i++) // update input array as per bit reverse order
+        for (int i = 0; i < a; i++) // reorder input array as per bit reverse adressing
         {
             out_r[i] = in[out_im[i]];
             out_im[i] = 0;
         }
 
-        int i10, i11, n1, tr, ti;
-        float e;
+        int i10, i11, n1, tr, ti; // naming?
+        float e; // nicer performance hit :(
         int c, s, temp4;
         for (int i = 0; i < o; i++) // fft
         {
             i10 = Pow2[i];               // overall values of sine/cosine
             i11 = Pow2[o] / Pow2[i + 1]; // loop with similar sine cosine
-            e = 1024 / Pow2[i + 1];      // 1024 is equivalent to 360 deg
+
+            // e doesnt need to be float, this is an int division ( also just use a shift operation here )
+            e = 1024 / Pow2[i + 1];      // 1024 is equivalent to 360 deg 
             e = 0 - e;
             n1 = 0;
 
@@ -232,6 +243,7 @@ namespace approxfft
                     }
                     else
                     {
+                        //this gets called way to often, also just use a lookup table
                         tr = fast_cosine(out_r[temp4], c) - fast_sine(out_im[temp4], c); // the fast sine/cosine function gives direct (approx) output for A*sinx
                         ti = fast_sine(out_r[temp4], c) + fast_cosine(out_im[temp4], c);
                     }
@@ -343,6 +355,8 @@ namespace approxfft
 
     //---------------------------------fast sine/cosine---------------------------------------//
 
+
+    //why?, just use a lookup table
     int fast_sine(int Amp, int th)
     {
         int temp3, m1, m2;
@@ -451,8 +465,8 @@ namespace approxfft
         }
         else
         {
-            temp1 = min >> 3;
-            if (temp1 == 0)
+            temp1 = min >> 3; // min /8 , min 1
+            if (temp1 == 0) // <8
             {
                 temp1 = 1;
             }
@@ -464,6 +478,8 @@ namespace approxfft
             }
             temp2 = RSSdata[clevel];
             temp1 = temp1 >> 1;
+
+            //just use a multiply command, this wastes so much time
             for (int i = 0; i < temp2; i++)
             {
                 max = max + temp1;
