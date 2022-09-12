@@ -13,6 +13,8 @@ namespace customfft
     int omega_power_imaginary(int exponent_nominator);
     int abs_complex(int real, int imaginary);
 
+    #define FFT_BUTTERFLY_DATA_TYPE int32_t
+    #define FFT_GENERAL_DATA_TYPE int16_t
 
     const int16_t MAX_MAGNITUDE = 1024;
     const byte OMEGA_SHIFT_AMOUNT = 10;
@@ -89,8 +91,8 @@ namespace customfft
 
     void custom_fft(int16_t in[], int16_t out[])
     {
-        int16_t temp_data_magnitude;
-        int16_t  data_max, data_min, data_avg, data_magnitude;
+        FFT_GENERAL_DATA_TYPE temp_data_magnitude;
+        FFT_GENERAL_DATA_TYPE  data_max, data_min, data_avg, data_magnitude;
         byte scale = 0;
         bool check = false;
 
@@ -190,15 +192,15 @@ namespace customfft
                     bottom value = top value - bottom value * twiddle factor
                 */
                
-                int32_t imaginary_bottom = in[j+butterfly_index_offset];                
-                int32_t real_bottom = out[j+butterfly_index_offset];
+                FFT_BUTTERFLY_DATA_TYPE imaginary_bottom = in[j+butterfly_index_offset];                
+                FFT_BUTTERFLY_DATA_TYPE real_bottom = out[j+butterfly_index_offset];
 
-                int32_t real_twiddlefactor = omega_power_real(twiddle_factor_exponent);
-                int32_t imaginary_twiddlefactor = omega_power_imaginary(twiddle_factor_exponent);
+                FFT_BUTTERFLY_DATA_TYPE real_twiddlefactor = omega_power_real(twiddle_factor_exponent);
+                FFT_BUTTERFLY_DATA_TYPE imaginary_twiddlefactor = omega_power_imaginary(twiddle_factor_exponent);
                 
                 // use these variables to calculate bottom * twiddle factor
-                int32_t real_top = real_bottom * real_twiddlefactor - imaginary_bottom * imaginary_twiddlefactor;
-                int32_t imaginary_top = real_bottom * imaginary_twiddlefactor + imaginary_bottom * real_twiddlefactor;
+                FFT_BUTTERFLY_DATA_TYPE real_top = real_bottom * real_twiddlefactor - imaginary_bottom * imaginary_twiddlefactor;
+                FFT_BUTTERFLY_DATA_TYPE imaginary_top = real_bottom * imaginary_twiddlefactor + imaginary_bottom * real_twiddlefactor;
 
                 // holds bottom * twiddle factor
                 real_bottom = real_top;
