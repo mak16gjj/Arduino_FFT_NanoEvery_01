@@ -7,6 +7,6 @@ namespace Profiler
 
     void reset();
     void start();
-    void stop();
+    void log();
     uint32_t* get_results();
 }

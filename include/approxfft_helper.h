@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <FastLED_helper.h>
 #include <equalizer_helper.h>
+#include "Profiler.h"
 
 #define AUDIO_IN_PIN A0
 
@@ -47,12 +48,14 @@ namespace approxfft
 
     void doApproxFFT()
     {
+        Profiler::start();
         for(uint16_t sample_nr = 0; sample_nr < SAMPLES;sample_nr++)
         {
             data[sample_nr] = analogRead(AUDIO_IN_PIN);
         }
-
+        Profiler::log();
         float f=Approx_FFT(data,SAMPLES,adc::sampleFrequencyFrequency);
+        Profiler::log();
         // Serial.println(f);
     }
 
@@ -315,7 +318,7 @@ namespace approxfft
         }
 
 
-
+        Profiler::log();
 
         // Reset bandValues[]
         for (int i = 0; i < 8; i++)

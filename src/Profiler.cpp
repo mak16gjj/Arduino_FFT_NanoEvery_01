@@ -23,7 +23,7 @@ namespace Profiler
         last_micros = micros();
     }
 
-    void stop()
+    void log()
     {
         points[last_index] = micros() - last_micros;
         last_index++;

@@ -47,7 +47,7 @@ void setup() {
   Profiler::reset();
   Profiler::start();
   delay(1000);
-  Profiler::stop();
+  Profiler::log();
   uint32_t* result = Profiler::get_results();
   Serial.println("Starting nano Every!");
   Serial.print(*result);
@@ -78,11 +78,19 @@ void loop() {
     
     if(mode == 2)
     {
+      Profiler::reset();
       approxfft::doApproxFFT();
       //customfft::doCustomFFT();
       Mode1_changeSubmode(); 
+      Profiler::start();
       //submode = 2;  //nur zum Testen des spezifischen Submodes
       sendArray();
+      Profiler::log();
+      uint32_t* results = Profiler::get_results();
+      Serial << "ADC Capture Time: " << results[0] <<" us" << endl;
+      Serial << "FFT Calculation Time: " << results[1] <<" us" << endl;
+      Serial << "Bar Building Time: " << results[2] <<" us" << endl;
+      Serial << "Send Array Time: " << results[3] <<" us" << endl;
     }
 
     
