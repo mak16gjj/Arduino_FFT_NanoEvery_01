@@ -27,6 +27,10 @@ namespace Profiler
     {
         points[last_index] = micros() - last_micros;
         last_index++;
+        if(last_index >= MAX_POINTS)
+        {
+            last_index = 0;
+        }
         last_micros = micros();
     }
 
