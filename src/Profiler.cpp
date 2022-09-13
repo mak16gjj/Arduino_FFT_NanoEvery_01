@@ -1,15 +1,15 @@
 #include <Arduino.h>
-#include "Profiler.h"
+#include "Profiler.hpp"
 
 
 namespace Profiler
 {
-    static uint32_t points[MAX_POINTS] = {};
-    static uint32_t last_micros;
-    static int last_index;
+    Profiler::Profiler()
+    {
+        reset();
+    }
 
-
-    void reset()
+    void Profiler::reset()
     {
         for(int i = 0; i < MAX_POINTS; i++)
         {
@@ -18,12 +18,12 @@ namespace Profiler
         last_index = 0;
     }
 
-    void start()
+    void Profiler::start()
     {
         last_micros = micros();
     }
 
-    void log()
+    void Profiler::log()
     {
         points[last_index] = micros() - last_micros;
         last_index++;
@@ -34,7 +34,7 @@ namespace Profiler
         last_micros = micros();
     }
 
-    uint32_t* get_results()
+    uint32_t* Profiler::get_results()
     {
         return points;
     }
