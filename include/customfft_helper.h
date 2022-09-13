@@ -8,6 +8,7 @@
 
 namespace customfft
 {
+    int fastRSS(int a, int b);
     void custom_fft(int in[], int out[]);
     int omega_power_real(int exponent_nominator);
     int omega_power_imaginary(int exponent_nominator);
@@ -79,12 +80,14 @@ namespace customfft
 
     void doCustomFFT()
     {
+        //Profiler::start();
         for(uint16_t sample_nr = 0; sample_nr < NUMBER_OF_SAMPLES;sample_nr++)
         {
             data[sample_nr] = analogRead(AUDIO_IN_PIN);
         }
-
+        //Profiler::log();
         custom_fft(data,out);
+        //Profiler::log();
         // Serial.println(f);
     }
    
@@ -270,10 +273,10 @@ namespace customfft
 
         for(int i = 0; i < NUMBER_OF_SAMPLES; i++)
         {
-            out[i] = abs_complex(out[i], in[i]);
+            out[i] = fastRSS(out[i], in[i]);
         }
         
-      
+        //Profiler::log();
 
         // Reset bandValues[]
         for (int i = 0; i < 8; i++)

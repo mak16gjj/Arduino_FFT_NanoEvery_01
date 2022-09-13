@@ -9,7 +9,7 @@
 #include <nrf24_helper.h>
 #include <customfft_helper.h>
 
-#include "Profiler.h"
+#include "Profiler.hpp"
 
 #define Pin_Button 4
 uint8_t last_Button_State = 0;
@@ -44,13 +44,10 @@ void setup() {
   msgeq7::begin();
   equalizer::setup();
   nrf24::setupSEND();
-  Profiler::reset();
-  Profiler::start();
-  delay(1000);
-  Profiler::log();
-  uint32_t* result = Profiler::get_results();
+  delay(1000); 
+  
   Serial.println("Starting nano Every!");
-  Serial.print(*result);
+  
 }
 
 void loop() {
@@ -78,19 +75,21 @@ void loop() {
     
     if(mode == 2)
     {
-      Profiler::reset();
-      approxfft::doApproxFFT();
-      //customfft::doCustomFFT();
+      //Profiler::reset();
+      //approxfft::doApproxFFT();
+      customfft::doCustomFFT();
       Mode1_changeSubmode(); 
-      Profiler::start();
+      //Profiler::start();
       //submode = 2;  //nur zum Testen des spezifischen Submodes
       sendArray();
-      Profiler::log();
-      uint32_t* results = Profiler::get_results();
+      //Profiler::log();
+      //uint32_t* results = Profiler::get_results();
+      /*
       Serial << "ADC Capture Time: " << results[0] <<" us" << endl;
       Serial << "FFT Calculation Time: " << results[1] <<" us" << endl;
       Serial << "Bar Building Time: " << results[2] <<" us" << endl;
       Serial << "Send Array Time: " << results[3] <<" us" << endl;
+      */
     }
 
     
