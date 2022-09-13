@@ -9,6 +9,8 @@
 #include <nrf24_helper.h>
 #include <customfft_helper.h>
 
+#include "Profiler.h"
+
 #define Pin_Button 4
 uint8_t last_Button_State = 0;
 
@@ -42,9 +44,13 @@ void setup() {
   msgeq7::begin();
   equalizer::setup();
   nrf24::setupSEND();
-
+  Profiler::reset();
+  Profiler::start();
   delay(1000);
+  Profiler::stop();
+  uint32_t* result = Profiler::get_results();
   Serial.println("Starting nano Every!");
+  Serial.print(*result);
 }
 
 void loop() {
