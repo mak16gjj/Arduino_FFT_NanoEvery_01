@@ -6,8 +6,8 @@
 
 namespace fft
 {
-    typedef int16_t FFT_DATA_TYPE;
-    typedef int32_t FFT_BUTTERFLY_DATA_TYPE;
+    typedef int64_t FFT_DATA_TYPE;
+    typedef int64_t FFT_BUTTERFLY_DATA_TYPE;
 
     const FFT_DATA_TYPE FFT_DATA_TYPE_MAX = INT_FAST16_MAX;
     const FFT_DATA_TYPE FFT_DATA_TYPE_MIN = INT_FAST16_MIN;
@@ -24,5 +24,5 @@ namespace fft
             static void apply_bit_reverse_ordering(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[]);
             static void apply_butterfly(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[]);
             static void rescale_data(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[],signed char scaling);
-    }
+    };
 }

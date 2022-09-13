@@ -159,6 +159,7 @@ namespace fft
 
     void FFT::apply_butterfly(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[])
     {
+        int test = 0;
         for(int i = 0; i < LB_NUMBER_OF_SAMPLES; i++)
         {
             //calculate the offset between samples
@@ -166,53 +167,59 @@ namespace fft
             int twiddle_factor_increase = NUMBER_OF_SAMPLES >> i + 1; // starts with 32, then 16, 8, 4, 2, 1
             int twiddle_factor_exponent = 0;
 
-            for(int j = 0; j < NUMBER_OF_SAMPLES >> 1; j++)
+            //create loop for batches
+            for (int j = 0; j < NUMBER_OF_SAMPLES >> (1+i); j++)
             {
-                //do a butterfly calculation:
-                /*
-                    twiddle factor = 
-                    top value = top value + bottom value * twiddle factor
-                    bottom value = top value - bottom value * twiddle factor
-                */
-               
-                FFT_BUTTERFLY_DATA_TYPE imaginary_bottom = out[j+butterfly_index_offset];                
-                FFT_BUTTERFLY_DATA_TYPE real_bottom = in[j+butterfly_index_offset];
+                int start_index = j << (i + 1);
+                // create loop for each batch 
+                for (int k = 0; k < 1 << (i); k++)
+                {
+                    //do a butterfly calculation:
+                    /*
+                        twiddle factor =
+                        top value = top value + bottom value * twiddle factor
+                        bottom value = top value - bottom value * twiddle factor
+                    */
+                    FFT_BUTTERFLY_DATA_TYPE imaginary_bottom = out[start_index + butterfly_index_offset];
+                    FFT_BUTTERFLY_DATA_TYPE real_bottom = in[start_index + butterfly_index_offset];
 
-                FFT_BUTTERFLY_DATA_TYPE real_twiddlefactor = omega_power_real(twiddle_factor_exponent);
-                FFT_BUTTERFLY_DATA_TYPE imaginary_twiddlefactor = omega_power_imaginary(twiddle_factor_exponent);
-                
-                // use these variables to calculate bottom * twiddle factor
-                FFT_BUTTERFLY_DATA_TYPE real_top = real_bottom * real_twiddlefactor - imaginary_bottom * imaginary_twiddlefactor;
-                FFT_BUTTERFLY_DATA_TYPE imaginary_top = real_bottom * imaginary_twiddlefactor + imaginary_bottom * real_twiddlefactor;
+                    FFT_BUTTERFLY_DATA_TYPE real_twiddlefactor = omega_power_real(twiddle_factor_exponent);
+                    FFT_BUTTERFLY_DATA_TYPE imaginary_twiddlefactor = omega_power_imaginary(twiddle_factor_exponent);
 
-                // holds bottom * twiddle factor
-                real_bottom = real_top;
-                imaginary_bottom = imaginary_top;
+                    // use these variables to calculate bottom * twiddle factor
+                    FFT_BUTTERFLY_DATA_TYPE real_top = real_bottom * real_twiddlefactor - imaginary_bottom * imaginary_twiddlefactor;
+                    FFT_BUTTERFLY_DATA_TYPE imaginary_top = real_bottom * imaginary_twiddlefactor + imaginary_bottom * real_twiddlefactor;
 
-                // shift top as much as bottom was shifted due to twiddle factor
-                imaginary_top = out[j] << OMEGA_SHIFT_AMOUNT;
-                real_top = in[j] << OMEGA_SHIFT_AMOUNT;
+                    // holds bottom * twiddle factor
+                    real_bottom = real_top;
+                    imaginary_bottom = imaginary_top;
 
-                // hold the result for top
-                real_twiddlefactor = real_top + real_bottom;
-                imaginary_twiddlefactor = imaginary_top + imaginary_bottom;
+                    // shift top as much as bottom was shifted due to twiddle factor
+                    imaginary_top = out[start_index] << OMEGA_SHIFT_AMOUNT;
+                    real_top = in[start_index] << OMEGA_SHIFT_AMOUNT;
 
-                //calculate bottom values
-                real_bottom = real_top - real_bottom;
-                imaginary_bottom = imaginary_top-imaginary_bottom;
+                    // hold the result for top
+                    real_twiddlefactor = real_top + real_bottom;
+                    imaginary_twiddlefactor = imaginary_top + imaginary_bottom;
 
-                //write back, undo the shift from the twiddle factor
+                    //calculate bottom values
+                    real_bottom = real_top - real_bottom;
+                    imaginary_bottom = imaginary_top - imaginary_bottom;
 
-                in[j] = real_top;
-                out[j] = imaginary_top;
+                    //write back, undo the shift from the twiddle factor
 
-                in[j+butterfly_index_offset] = real_bottom;
-                out[j+butterfly_index_offset] = imaginary_bottom;
+                    in[start_index] = real_twiddlefactor >> OMEGA_SHIFT_AMOUNT;
+                    out[start_index] = imaginary_twiddlefactor >> OMEGA_SHIFT_AMOUNT;
+
+                    in[start_index + butterfly_index_offset] = real_bottom >> OMEGA_SHIFT_AMOUNT;
+                    out[start_index + butterfly_index_offset] = imaginary_bottom >> OMEGA_SHIFT_AMOUNT;
 
 
-                //adjust tiwddle factor for next calculation
-                twiddle_factor_exponent += twiddle_factor_increase;
-                twiddle_factor_exponent %= NUMBER_OF_SAMPLES / 2;
+                    //adjust tiwddle factor for next calculation
+                    twiddle_factor_exponent += twiddle_factor_increase;
+                    twiddle_factor_exponent %= NUMBER_OF_SAMPLES / 2;
+                    start_index++;
+                }
             }
         }
 
@@ -271,17 +278,19 @@ namespace fft
 
     //--------------------------------Fast RSS----------------------------------------//
 
-    int abs_complex(int real, int imaginary)
+    int abs_complex(FFT_DATA_TYPE real, FFT_DATA_TYPE imaginary)
     {
-        //return fastRSS(real, imaginary);
+        return fastRSS(real, imaginary);
         
+        
+
         uint32_t target = (uint32_t)real * (uint32_t)real + (uint32_t)imaginary * (uint32_t)imaginary;
         uint32_t scale = 0x8000;
         uint32_t guess = 0;
-        uint32_t guess_alt;
 
         for(int i = 0; i < 16; i++)
         {
+            uint32_t guess_alt;
             guess_alt = guess + scale;
             if(guess_alt*guess_alt <= target)
             {
@@ -294,13 +303,13 @@ namespace fft
 
     }
 
-    int fastRSS(int a, int b)
+    int fastRSS(FFT_DATA_TYPE a, FFT_DATA_TYPE b)
     {
         if (a == 0 && b == 0)
         {
             return (0);
         }
-        int min, max, temp1, temp2;
+        FFT_DATA_TYPE min, max;
         signed char clevel;
         if (a < 0)
         {
@@ -328,6 +337,7 @@ namespace fft
         }
         else
         {
+            FFT_DATA_TYPE temp1, temp2;
             temp1 = min >> 3; // min /8 , min 1
             if (temp1 == 0) // <8
             {
