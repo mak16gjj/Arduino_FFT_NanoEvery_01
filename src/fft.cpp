@@ -1,5 +1,10 @@
 #include "fft.hpp"
 
+#include "Profiler.hpp"
+#include "debug_config.h"
+
+#include <Streaming.h>
+
 namespace fft
 {
     int omega_power_real(int exponent_nominator);
@@ -50,24 +55,42 @@ namespace fft
     //---------------------------------------------------------------------------------//
 
    
-    
 
     void FFT::do_fft(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[])
     {
+        profiler::global_Profiler.reset();
+        profiler::global_Profiler.start();
         char scale = scale_data(in);
+        profiler::global_Profiler.log();
 
         //reorder input by bit reversed addressing, store it in out temporarily
 
         apply_bit_reverse_ordering(in, out);
+         profiler::global_Profiler.log();
 
         // out now holds the real part and in holds the imaginary part of our values
 
         // in and out are switched in this call
         apply_butterfly(out, in);
+         profiler::global_Profiler.log();
 
         //reverse input scaling
 
-        rescale_data(in, out, scale);       
+        rescale_data(in, out, scale);     
+         profiler::global_Profiler.log();  
+
+        #ifdef FFT_PROFILING_OUTPUT
+
+        uint32_t* profiling_data = profiler::global_Profiler.get_results();
+
+
+        Serial << "FFT Performance:\n";
+        Serial << "Prescaleing:" << profiling_data[0] << " us\n";
+        Serial << "Reordering:" << profiling_data[1] << " us\n";
+        Serial << "Butterfly:" << profiling_data[2] << " us\n";
+        Serial << "Rescaling:" << profiling_data[3] << " us\n";
+        #endif
+
     }
 
     signed char FFT::scale_data(FFT_DATA_TYPE data[])
