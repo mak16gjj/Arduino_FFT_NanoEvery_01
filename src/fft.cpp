@@ -231,7 +231,7 @@ namespace fft
 
     void FFT::rescale_data(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[],signed char scaling)
     {
-        if(scaling > 0)
+        if(scaling >= 0)
         {
             for(int i = 0; i < NUMBER_OF_SAMPLES; i++)
             {
@@ -284,7 +284,7 @@ namespace fft
         
         
 
-        uint32_t target = (uint32_t)real * (uint32_t)real + (uint32_t)imaginary * (uint32_t)imaginary;
+        uint32_t target = (uint32_t)real * (uint32_t)real + (uint32_t)imaginary * (uint32_t)imaginary;        
         uint32_t scale = 0x8000;
         uint32_t guess = 0;
 
