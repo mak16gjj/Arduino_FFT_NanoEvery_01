@@ -2,7 +2,7 @@
 #include "Profiler.hpp"
 
 
-namespace Profiler
+namespace profiler
 {
     Profiler::Profiler()
     {
@@ -39,4 +39,5 @@ namespace Profiler
         return points;
     }
 
+    Profiler global_Profiler;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-namespace Profiler
+namespace profiler
 {
     const int MAX_POINTS = 8;
 
@@ -20,4 +20,6 @@ namespace Profiler
             uint32_t last_micros;
             int last_index;
     };
+
+    extern Profiler global_Profiler;
 }
