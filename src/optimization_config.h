@@ -1,0 +1,3 @@
+#pragma once
+
+#define ARDUINO_SHIFT_10_OPTIMIZATION
