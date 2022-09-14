@@ -2,6 +2,7 @@
 
 #include "Profiler.hpp"
 #include "debug_config.h"
+#include "optimization_config.h"
 
 #include <Streaming.h>
 
@@ -14,7 +15,7 @@ namespace fft
     
 
     const FFT_DATA_TYPE MAX_MAGNITUDE = 1024;
-    const int OMEGA_SHIFT_AMOUNT = 10;
+    const int OMEGA_SHIFT_AMOUNT = 8;
     
 
     //---------------------------------lookup data------------------------------------//
@@ -180,6 +181,22 @@ namespace fft
         }
     }
 
+#ifdef ARDUINO_SHIFT_10_OPTIMIZATION
+    typedef struct
+    {
+        char byte0;
+        char byte1;
+        char byte2;
+        char byte3;
+    }FOUR_BYTES;
+
+    typedef union
+    {
+        FFT_BUTTERFLY_DATA_TYPE butterfly;;
+        FOUR_BYTES bytewise;
+    }ARDUINO_SHIFT_10_OPTIMIZATION_UNION;
+#endif
+
     void FFT::apply_butterfly(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[])
     {
         int test = 0;
@@ -203,39 +220,62 @@ namespace fft
                         top value = top value + bottom value * twiddle factor
                         bottom value = top value - bottom value * twiddle factor
                     */
-                    FFT_BUTTERFLY_DATA_TYPE imaginary_bottom = out[start_index + butterfly_index_offset];
-                    FFT_BUTTERFLY_DATA_TYPE real_bottom = in[start_index + butterfly_index_offset];
+                    FFT_BUTTERFLY_DATA_TYPE old_imaginary_bottom = out[start_index + butterfly_index_offset];
+                    FFT_BUTTERFLY_DATA_TYPE old_real_bottom = in[start_index + butterfly_index_offset];
 
                     FFT_BUTTERFLY_DATA_TYPE real_twiddlefactor = omega_power_real(twiddle_factor_exponent);
                     FFT_BUTTERFLY_DATA_TYPE imaginary_twiddlefactor = omega_power_imaginary(twiddle_factor_exponent);
 
                     // use these variables to calculate bottom * twiddle factor
-                    FFT_BUTTERFLY_DATA_TYPE real_top = real_bottom * real_twiddlefactor - imaginary_bottom * imaginary_twiddlefactor;
-                    FFT_BUTTERFLY_DATA_TYPE imaginary_top = real_bottom * imaginary_twiddlefactor + imaginary_bottom * real_twiddlefactor;
+                    FFT_BUTTERFLY_DATA_TYPE real_product_long = old_real_bottom * real_twiddlefactor - old_imaginary_bottom * imaginary_twiddlefactor;
+                    FFT_BUTTERFLY_DATA_TYPE imaginary_product_long = old_real_bottom * imaginary_twiddlefactor + old_imaginary_bottom * real_twiddlefactor;
 
                     // holds bottom * twiddle factor
-                    real_bottom = real_top;
-                    imaginary_bottom = imaginary_top;
+                    #ifdef ARDUINO_SHIFT_10_OPTIMIZATION
+                    ARDUINO_SHIFT_10_OPTIMIZATION_UNION real_product_union; 
+                    ARDUINO_SHIFT_10_OPTIMIZATION_UNION imaginary_product_union;
 
+                    real_product_union.butterfly = real_product_long;
+                    imaginary_product_union.butterfly = imaginary_product_long;
+
+                    real_product_union.bytewise.byte3=real_product_union.bytewise.byte2;
+                    real_product_union.bytewise.byte2=real_product_union.bytewise.byte1;
+                    real_product_union.bytewise.byte1=real_product_union.bytewise.byte0;
+
+                    imaginary_product_union.bytewise.byte3=imaginary_product_union.bytewise.byte2;
+                    imaginary_product_union.bytewise.byte2=imaginary_product_union.bytewise.byte1;
+                    imaginary_product_union.bytewise.byte1=imaginary_product_union.bytewise.byte0;
+
+
+                    FFT_DATA_TYPE real_product = real_product_union.butterfly;
+                    FFT_DATA_TYPE imaginary_product = imaginary_product_union.butterfly;
+
+                    real_product <<= OMEGA_SHIFT_AMOUNT-8;
+                    imaginary_product <<= OMEGA_SHIFT_AMOUNT-8;
+
+                    #elif
+                    FFT_DATA_TYPE real_product = real_product_long >> OMEGA_SHIFT_AMOUNT;
+                    FFT_DATA_TYPE imaginary_product = imaginary_product_long >> OMEGA_SHIFT_AMOUNT;
+                    #endif
                     // shift top as much as bottom was shifted due to twiddle factor
-                    imaginary_top = out[start_index] << OMEGA_SHIFT_AMOUNT;
-                    real_top = in[start_index] << OMEGA_SHIFT_AMOUNT;
+                    FFT_DATA_TYPE old_imaginary_top = out[start_index];
+                    FFT_DATA_TYPE old_real_top = in[start_index];
 
                     // hold the result for top
-                    real_twiddlefactor = real_top + real_bottom;
-                    imaginary_twiddlefactor = imaginary_top + imaginary_bottom;
+                    FFT_DATA_TYPE real_top = old_real_top + real_product;
+                    FFT_DATA_TYPE imaginary_top = old_imaginary_top + imaginary_product;
 
                     //calculate bottom values
-                    real_bottom = real_top - real_bottom;
-                    imaginary_bottom = imaginary_top - imaginary_bottom;
+                    FFT_DATA_TYPE real_bottom = old_real_top - real_product;
+                    FFT_DATA_TYPE imaginary_bottom = old_imaginary_top - imaginary_product;
 
                     //write back, undo the shift from the twiddle factor
 
-                    in[start_index] = real_twiddlefactor >> OMEGA_SHIFT_AMOUNT;
-                    out[start_index] = imaginary_twiddlefactor >> OMEGA_SHIFT_AMOUNT;
+                    in[start_index] = real_top;
+                    out[start_index] = imaginary_top;
 
-                    in[start_index + butterfly_index_offset] = real_bottom >> OMEGA_SHIFT_AMOUNT;
-                    out[start_index + butterfly_index_offset] = imaginary_bottom >> OMEGA_SHIFT_AMOUNT;
+                    in[start_index + butterfly_index_offset] = real_bottom;
+                    out[start_index + butterfly_index_offset] = imaginary_bottom;
 
 
                     //adjust tiwddle factor for next calculation
