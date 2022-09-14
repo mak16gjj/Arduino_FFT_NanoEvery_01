@@ -30,10 +30,13 @@ namespace fft
         0x03, 0x23, 0x13, 0x33, 0x0b, 0x2b, 0x1b, 0x3b,
         0x07, 0x27, 0x17, 0x37, 0x0f, 0x2f, 0x1f, 0x3f,
     };
-
+    #ifdef ARDUINO_USE_LARGE_SIN_LOOKUP
+    const FFT_DATA_TYPE omega_data[3*NUMBER_OF_SAMPLES / 4 + 1] = // 1024 * sin values in pi / 32 steps  tp pi/2
+    #else
     const FFT_DATA_TYPE omega_data[NUMBER_OF_SAMPLES / 4 + 1] = // 1024 * sin values in pi / 32 steps  tp pi/2
+    #endif
         {
-            0 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            0 >> (10 - OMEGA_SHIFT_AMOUNT),  //0
             100 >> (10 - OMEGA_SHIFT_AMOUNT),  
             200 >> (10 - OMEGA_SHIFT_AMOUNT),  
             297 >> (10 - OMEGA_SHIFT_AMOUNT), 
@@ -49,7 +52,41 @@ namespace fft
             980 >> (10 - OMEGA_SHIFT_AMOUNT),  
             1004 >> (10 - OMEGA_SHIFT_AMOUNT), 
             1019 >> (10 - OMEGA_SHIFT_AMOUNT), 
-            1024 >> (10 - OMEGA_SHIFT_AMOUNT)
+            1024 >> (10 - OMEGA_SHIFT_AMOUNT), // 16
+            #ifdef ARDUINO_USE_LARGE_SIN_LOOKUP
+            1019 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            1004 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            980 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            946 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            903 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            851 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            792 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            724 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            650 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            569 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            483 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            392 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            297 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            200 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            100 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            0 >> (10 - OMEGA_SHIFT_AMOUNT),   //32
+            -100 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -200 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -297 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            -392 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -483 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -569 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -650 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            -724 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -792 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -851 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -903 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            -946 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -980 >> (10 - OMEGA_SHIFT_AMOUNT),  
+            -1004 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            -1019 >> (10 - OMEGA_SHIFT_AMOUNT), 
+            -1024 >> (10 - OMEGA_SHIFT_AMOUNT), //48
+            #endif
         };
     
     const unsigned char RSSdata[20] = {7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2};
@@ -313,8 +350,13 @@ namespace fft
 
     //---------------------------------omega function---------------------------------------//
 
+    #ifdef ARDUINO_USE_LARGE_SIN_LOOKUP
+    inline int omega_power_real(int exponent_nominator)
+    #else
     int omega_power_real(int exponent_nominator)
+    #endif
     {
+        #ifndef ARDUINO_USE_LARGE_SIN_LOOKUP
         // check if we are in the 2nd quadrant
         if(exponent_nominator > NUMBER_OF_SAMPLES / 4)
         {
@@ -324,16 +366,27 @@ namespace fft
         {
             return omega_data[NUMBER_OF_SAMPLES / 4 - exponent_nominator];
         }
+        #else
+        return omega_data[exponent_nominator + NUMBER_OF_SAMPLES / 4];
+        #endif
     }
 
+    #ifdef ARDUINO_USE_LARGE_SIN_LOOKUP
+    inline int omega_power_imaginary(int exponent_nominator)
+    #else
     int omega_power_imaginary(int exponent_nominator)
+    #endif
     {
+        #ifndef ARDUINO_USE_LARGE_SIN_LOOKUP
         // check if we are in the 2nd quadrant
         if(exponent_nominator > NUMBER_OF_SAMPLES / 4)
         {
             exponent_nominator = NUMBER_OF_SAMPLES / 2 - exponent_nominator;
         }
         return omega_data[exponent_nominator];
+        #else
+        return omega_data[exponent_nominator];
+        #endif;
     }
     
 
