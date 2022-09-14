@@ -6,7 +6,7 @@
 #include <adc_helper.h>
 #define AUDIO_IN_PIN A0
 
-namespace fft
+namespace fft_
 {
     // arduinoFFT:
     const uint16_t SAMPLES = 64; // Must be a power of 2

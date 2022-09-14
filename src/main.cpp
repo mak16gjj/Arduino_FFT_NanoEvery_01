@@ -80,6 +80,11 @@ void loop() {
       //Profiler::reset();
       //approxfft::doApproxFFT();
       customfft::doCustomFFT();
+
+      int16_t in[64];
+      int16_t out[64];
+      fft::FFT::do_fft(in, out);
+
       Mode1_changeSubmode(); 
       //Profiler::start();
       //submode = 2;  //nur zum Testen des spezifischen Submodes
