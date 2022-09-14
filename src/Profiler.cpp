@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "Profiler.hpp"
 
+#include "debug_config.h"
 
 namespace profiler
 {

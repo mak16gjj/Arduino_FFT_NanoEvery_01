@@ -5,8 +5,6 @@ namespace profiler
 {
     const int MAX_POINTS = 8;
 
-    #define PROFILING_ENABLED
-
     class Profiler
     {
         public:
