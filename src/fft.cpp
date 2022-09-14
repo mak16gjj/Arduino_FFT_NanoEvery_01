@@ -200,19 +200,19 @@ namespace fft
     void FFT::apply_butterfly(FFT_DATA_TYPE in[], FFT_DATA_TYPE out[])
     {
         int test = 0;
-        for(int i = 0; i < LB_NUMBER_OF_SAMPLES; i++)
+        for(machine_int i = 0; i < LB_NUMBER_OF_SAMPLES; i++)
         {
             //calculate the offset between samples
-            int butterfly_index_offset = 1 << i; //This is 1 at first, then 2, 4, 8, 16, 32 (1<<5)
-            int twiddle_factor_increase = NUMBER_OF_SAMPLES >> i + 1; // starts with 32, then 16, 8, 4, 2, 1
-            int twiddle_factor_exponent = 0;
+            machine_int butterfly_index_offset = 1 << i; //This is 1 at first, then 2, 4, 8, 16, 32 (1<<5)
+            machine_int twiddle_factor_increase = NUMBER_OF_SAMPLES >> i + 1; // starts with 32, then 16, 8, 4, 2, 1
+            machine_int twiddle_factor_exponent = 0;
 
             //create loop for batches
-            for (int j = 0; j < NUMBER_OF_SAMPLES >> (1+i); j++)
+            for (machine_int j = 0; j < NUMBER_OF_SAMPLES >> (1+i); j++)
             {
-                int start_index = j << (i + 1);
+                machine_int start_index = j << (i + 1);
                 // create loop for each batch 
-                for (int k = 0; k < 1 << (i); k++)
+                for (machine_int k = 0; k < 1 << (i); k++)
                 {
                     //do a butterfly calculation:
                     /*
@@ -253,7 +253,7 @@ namespace fft
                     real_product <<= OMEGA_SHIFT_AMOUNT-8;
                     imaginary_product <<= OMEGA_SHIFT_AMOUNT-8;
 
-                    #elif
+                    #else
                     FFT_DATA_TYPE real_product = real_product_long >> OMEGA_SHIFT_AMOUNT;
                     FFT_DATA_TYPE imaginary_product = imaginary_product_long >> OMEGA_SHIFT_AMOUNT;
                     #endif
